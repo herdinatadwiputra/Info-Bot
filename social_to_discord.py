@@ -16,6 +16,7 @@ import requests
 RSSHUB = os.environ.get("RSSHUB_URL", "http://localhost:1200")
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "180"))
 MAX_PER_SOURCE = int(os.environ.get("MAX_PER_SOURCE", "5"))  # cegah banjir per cek
+IG_MIN_INTERVAL = int(os.environ.get("IG_MIN_INTERVAL", "30"))  # menit; IG dicek jarang supaya akun aman
 
 # Jenis sumber:  ("x", "username")  ("ig", "username")  ("rss", "https://url-feed")
 # Username/URL di bawah adalah CONTOH. Yang bertanda "cek" harus dipastikan dulu.
@@ -24,21 +25,26 @@ CHANNELS = {
         "webhook_env": "WEBHOOK_BERITA",
         "sources": [
             ("rss", "https://feeds.bbci.co.uk/news/world/rss.xml"),
+            ("rss", "https://www.aljazeera.com/xml/rss/all.xml"),
             ("rss", "https://www.antaranews.com/rss/terkini.xml"),  # cek
+            ("rss", "https://www.cnnindonesia.com/nasional/rss"),  # cek
         ],
     },
     "techinfo": {
         "webhook_env": "WEBHOOK_TECH",
         "sources": [
+            ("rss", "https://feeds.arstechnica.com/arstechnica/index"),
             ("rss", "https://www.theverge.com/rss/index.xml"),
-            ("rss", "https://rss.detik.com/index.php/inet"),  # cek
+            ("rss", "https://techcrunch.com/feed/"),
         ],
     },
     "footballinfo": {
         "webhook_env": "WEBHOOK_BOLA",
         "sources": [
             ("x", "FabrizioRomano"),
+            ("x", "David_Ornstein"),
             ("rss", "https://feeds.bbci.co.uk/sport/football/rss.xml"),
+            ("rss", "https://www.theguardian.com/football/rss"),
         ],
     },
     "animeinfo": {
@@ -50,14 +56,21 @@ CHANNELS = {
     "gameinfo": {
         "webhook_env": "WEBHOOK_GAME",
         "sources": [
-            ("rss", "https://www.pcgamer.com/rss/"),  # cek
+            ("rss", "https://www.eurogamer.net/feed"),
             ("rss", "https://www.gamespot.com/feeds/news/"),  # cek
+            ("rss", "https://www.pcgamer.com/rss/"),  # cek
+            ("rss", "https://dotesports.com/feed"),  # cek, esports
         ],
     },
     "mobilelegendsinfo": {
         "webhook_env": "WEBHOOK_MLBB",
         "sources": [
-            ("x", "MLBB_Official"),  # cek username resminya
+            ("x", "mplidofficial"),   # MPL Indonesia (resmi)
+            ("x", "mlbbesports_en"),  # MLBB Esports global (resmi)
+            ("x", "real_mlbbid"),     # MLBB Indonesia (cek masih aktif)
+            ("ig", "mpl.id.official"),  # MPL Indonesia (cek: handle sama dengan FB/TikTok resminya)
+            # YouTube resmi (lebih stabil dari X), ganti CHANNEL_ID:
+            # ("rss", "https://www.youtube.com/feeds/videos.xml?channel_id=CHANNEL_ID"),
         ],
     },
     "eafcinfo": {
@@ -69,13 +82,19 @@ CHANNELS = {
     "pubgminfo": {
         "webhook_env": "WEBHOOK_PUBGM",
         "sources": [
-            ("x", "PUBGMOBILE"),
+            ("x", "PUBGMOBILE"),        # global (resmi)
+            ("x", "pubgmesportsid"),    # PUBG Mobile Esports Indonesia (resmi)
+            ("ig", "pubgmobile.esports.id"),  # IG resmi PUBG Mobile Esports Indonesia
+            ("rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCkB_AwGXxPAKdahxGHpeC4Q"),  # YouTube PUBG MOBILE Indonesia
         ],
     },
     "freefireinfo": {
         "webhook_env": "WEBHOOK_FREEFIRE",
         "sources": [
-            ("x", "freefire_ID"),  # cek username resminya
+            # Akun X Free Fire Indonesia hampir tidak aktif, jadi pakai Instagram resmi.
+            ("ig", "freefirebgid"),
+            # YouTube resmi Garena Free Fire Indonesia (opsional), isi CHANNEL_ID:
+            # ("rss", "https://www.youtube.com/feeds/videos.xml?channel_id=CHANNEL_ID"),
         ],
     },
     "valorantinfo": {
@@ -83,6 +102,8 @@ CHANNELS = {
         "sources": [
             ("x", "PlayVALORANT"),
             ("x", "VALORANTEsports"),
+            ("x", "vctpacific"),  # VCT Pacific (resmi, region Indonesia)
+            ("ig", "vctpacific"),
         ],
     },
 }
@@ -134,6 +155,12 @@ def check_all(state):
         for kind, value in ch["sources"]:
             label = f"{kind}:{value}" if kind != "rss" else "rss"
             key = f"{ch_name}|{kind}|{value}"
+
+            if kind == "ig":  # batasi frekuensi IG
+                last = state.setdefault("_last", {})
+                if time.time() - last.get(key, 0) < IG_MIN_INTERVAL * 60:
+                    continue
+                last[key] = time.time()
 
             try:
                 feed = feedparser.parse(source_to_url(kind, value))

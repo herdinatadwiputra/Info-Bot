@@ -44,11 +44,16 @@ jobs:
         env:
           RUN_ONCE: "1"
           RSSHUB_URL: http://localhost:1200
-          WEBHOOK_BOLA: ${{ secrets.WEBHOOK_BOLA }}
-          WEBHOOK_MLBB: ${{ secrets.WEBHOOK_MLBB }}
-          WEBHOOK_VALORANT: ${{ secrets.WEBHOOK_VALORANT }}
-          WEBHOOK_EAFC: ${{ secrets.WEBHOOK_EAFC }}
           WEBHOOK_BERITA: ${{ secrets.WEBHOOK_BERITA }}
+          WEBHOOK_TECH: ${{ secrets.WEBHOOK_TECH }}
+          WEBHOOK_BOLA: ${{ secrets.WEBHOOK_BOLA }}
+          WEBHOOK_ANIME: ${{ secrets.WEBHOOK_ANIME }}
+          WEBHOOK_GAME: ${{ secrets.WEBHOOK_GAME }}
+          WEBHOOK_MLBB: ${{ secrets.WEBHOOK_MLBB }}
+          WEBHOOK_EAFC: ${{ secrets.WEBHOOK_EAFC }}
+          WEBHOOK_PUBGM: ${{ secrets.WEBHOOK_PUBGM }}
+          WEBHOOK_FREEFIRE: ${{ secrets.WEBHOOK_FREEFIRE }}
+          WEBHOOK_VALORANT: ${{ secrets.WEBHOOK_VALORANT }}
         run: python social_to_discord.py
 
       - name: Simpan seen.json

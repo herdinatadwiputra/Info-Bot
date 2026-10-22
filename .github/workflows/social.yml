@@ -1,0 +1,59 @@
+# Simpan file ini di repo sebagai: .github/workflows/social.yml
+name: social-to-discord
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # tiap 5 menit (GitHub bisa molor beberapa menit)
+  workflow_dispatch:         # tombol "Run workflow" untuk tes manual
+
+permissions:
+  contents: write            # supaya seen.json bisa disimpan balik ke repo
+
+concurrency:
+  group: social-to-discord
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Jalankan RSSHub
+        env:
+          TWITTER_AUTH_TOKEN: ${{ secrets.TWITTER_AUTH_TOKEN }}
+          IG_COOKIE: ${{ secrets.IG_COOKIE }}
+        run: |
+          docker run -d --name rsshub -p 1200:1200 \
+            -e TWITTER_AUTH_TOKEN="$TWITTER_AUTH_TOKEN" \
+            -e IG_COOKIE="$IG_COOKIE" \
+            diygod/rsshub
+          for i in $(seq 1 30); do
+            curl -fs http://localhost:1200/ > /dev/null && break
+            sleep 2
+          done
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install feedparser requests
+
+      - name: Cek akun dan kirim ke Discord
+        env:
+          RUN_ONCE: "1"
+          RSSHUB_URL: http://localhost:1200
+          WEBHOOK_BOLA: ${{ secrets.WEBHOOK_BOLA }}
+          WEBHOOK_MLBB: ${{ secrets.WEBHOOK_MLBB }}
+          WEBHOOK_VALORANT: ${{ secrets.WEBHOOK_VALORANT }}
+          WEBHOOK_EAFC: ${{ secrets.WEBHOOK_EAFC }}
+          WEBHOOK_BERITA: ${{ secrets.WEBHOOK_BERITA }}
+        run: python social_to_discord.py
+
+      - name: Simpan seen.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add seen.json
+          git diff --cached --quiet || (git commit -m "update state" && git push)

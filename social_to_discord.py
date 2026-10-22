@@ -27,7 +27,7 @@ CHANNELS = {
             ("rss", "https://feeds.bbci.co.uk/news/world/rss.xml"),
             ("rss", "https://www.aljazeera.com/xml/rss/all.xml"),
             ("rss", "https://www.antaranews.com/rss/terkini.xml"),  # cek
-            ("rss", "https://www.cnnindonesia.com/nasional/rss"),  # cek
+            # ("rss", "https://www.cnnindonesia.com/nasional/rss"),  # GAGAL dibaca di GitHub, dimatikan
         ],
     },
     "techinfo": {
@@ -59,7 +59,7 @@ CHANNELS = {
             ("rss", "https://www.eurogamer.net/feed"),
             ("rss", "https://www.gamespot.com/feeds/news/"),  # cek
             ("rss", "https://www.pcgamer.com/rss/"),  # cek
-            ("rss", "https://dotesports.com/feed"),  # cek, esports
+            # ("rss", "https://dotesports.com/feed"),  # GAGAL dibaca di GitHub, dimatikan
         ],
     },
     "mobilelegendsinfo": {
@@ -85,7 +85,9 @@ CHANNELS = {
             ("x", "PUBGMOBILE"),        # global (resmi)
             ("x", "pubgmesportsid"),    # PUBG Mobile Esports Indonesia (resmi)
             ("ig", "pubgmobile.esports.id"),  # IG resmi PUBG Mobile Esports Indonesia
-            ("rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCkB_AwGXxPAKdahxGHpeC4Q"),  # YouTube PUBG MOBILE Indonesia
+            # YouTube PUBG MOBILE Indonesia: GAGAL dibaca di GitHub. Tes dulu URL ini di browser;
+            # kalau muncul XML berarti YouTube memblokir server GitHub, hapus saja barisnya.
+            # ("rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCkB_AwGXxPAKdahxGHpeC4Q"),
         ],
     },
     "freefireinfo": {
@@ -171,6 +173,7 @@ def check_all(state):
                 print(f"[!] Error {key}: {e}")
                 continue
 
+            print(f"[ok] {key}: {len(feed.entries)} entri")
             is_new_source = key not in state  # sumber baru: tandai saja, jangan spam
             seen = set(state.get(key, []))
             fresh = [e for e in feed.entries if (e.get("id") or e.link) not in seen]
